@@ -1,27 +1,67 @@
-const getContacts = (req, res) => {
-  res.status(200).json({ message: "Get All Contacts" });
-};
+const Contact = require("../models/contactModel");
+const asyncHandler = require("express-async-handler");
 
-const getContact = (req, res) => {
-  res.status(200).json({ message: `Get Contact By ${req.params.id}` });
-};
+const getContacts = asyncHandler(async (req, res) => {
+  const contacts = await Contact.find();
 
-const deleteContact = (req, res) => {
-  res.status(200).json({ message: `Delete Contact By ${req.params.id}` });
-};
+  res.status(200).json(contacts);
+});
 
-const updateContact = (req, res) => {
-  res.status(200).json({ message: `Update Contact Of ${req.params.id}` });
-};
+const getContact = asyncHandler(async (req, res) => {
+  const contact = await Contact.findById(req.params.id);
 
-const createContact = (req, res) => {
+  if (!contact) {
+    res.status(404);
+    throw new Error("Contact Not Found");
+  }
+
+  res.status(200).json(contact);
+});
+
+const deleteContact = asyncHandler(async (req, res) => {
+  const contact = await Contact.findById(req.params.id);
+  if (!contact) {
+    res.status(404);
+    throw new Error("Contact Not Found");
+  }
+
+  await contact.deleteOne();
+
+  res.status(200).json({ message: "Contact deleted successfully" });
+});
+
+const updateContact = asyncHandler(async (req, res) => {
+  const contact = await Contact.findById(req.params.id);
+  if (!contact) {
+    res.status(404);
+    throw new Error("Contact Not Found");
+  }
+
+  const updateContact = await Contact.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    {
+      new: true,
+    }
+  );
+
+  res.status(200).json(updateContact);
+});
+
+const createContact = asyncHandler(async (req, res) => {
   const { name, email, phone } = req.body;
   if (!name || !email || !phone) {
     res.status(400);
     throw new Error("All Fields Are Mendatory");
   }
-  res.status(200).json({ message: `Create Contact` });
-};
+  const contact = await Contact.create({
+    name,
+    email,
+    phone,
+  });
+
+  res.status(200).json(contact);
+});
 
 module.exports = {
   getContacts,
