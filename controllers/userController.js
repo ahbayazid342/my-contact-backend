@@ -1,8 +1,8 @@
-const ayncHandler = require("express-async-handler");
-const bcryprt = require("bcrypt");
+const asyncHandler = require("express-async-handler");
+const bcrypt = require("bcrypt");
 const User = require("../models/userModel");
 
-const userRegister = ayncHandler(async (req, res) => {
+const userRegister = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
@@ -13,33 +13,44 @@ const userRegister = ayncHandler(async (req, res) => {
   const userAvailable = await User.findOne({ email });
 
   if (userAvailable) {
-    res.status(400).json({ message: "User already registered" });
+    return res.status(400).json({ message: "User already registered" });
   }
 
   const hashPassword = await bcryprt.hash(password, 10);
 
-  const user = User.create({
+  const user = await User.create({
     name,
     email,
     password: hashPassword,
   });
 
   if (user) {
-    res.status(200).json({
-      _id: user.id,
-      email: user.email,
-    });
+    res.status(200).json("Registration Successful");
   } else {
     res.status(400);
     throw new Error("User Data Is Not Valid");
   }
 });
 
-const userLogin = ayncHandler(async (req, res) => {
-  res.status(200).json("Login Successful");
+const userLogin = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(400);
+    throw new Error("Please create account first");
+  }
+
+  const checkPassword = await bcrypt.compare(password, user.password);
+
+  if (checkPassword) {
+    res.status(200).json("Login Successful");
+  } else {
+    res.status(400);
+    throw new Error("Password not correct");
+  }
 });
 
-const currentUser = ayncHandler(async (req, res) => {
+const currentUser = asyncHandler(async (req, res) => {
   res.status(200).json("Current User work");
 });
 
